@@ -43,10 +43,10 @@ Library
                    uuid == 1.2.*
 
   Exposed-Modules: 
-                   Application.Hxournal.NetworkClipboard.Client.ProgType
-                   Application.Hxournal.NetworkClipboard.Client.Job
-                   Application.Hxournal.NetworkClipboard.Client.Config
-                   Application.Hxournal.NetworkClipboard.Client.Command
+                   Application.HXournal.NetworkClipboard.Client.ProgType
+                   Application.HXournal.NetworkClipboard.Client.Job
+                   Application.HXournal.NetworkClipboard.Client.Config
+                   Application.HXournal.NetworkClipboard.Client.Command
   Other-Modules: 
 
  

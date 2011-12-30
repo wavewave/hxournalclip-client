@@ -2,8 +2,8 @@ module Main where
 
 import System.Console.CmdArgs
 
-import Application.Hxournal.NetworkClipboard.Client.ProgType
-import Application.Hxournal.NetworkClipboard.Client.Command
+import Application.HXournal.NetworkClipboard.Client.ProgType
+import Application.HXournal.NetworkClipboard.Client.Command
 
 main :: IO () 
 main = do 

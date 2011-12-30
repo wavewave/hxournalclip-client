@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Application.Hxournal.NetworkClipboard.Client.Job where
+module Application.HXournal.NetworkClipboard.Client.Job where
 
 import Debug.Trace
 
@@ -18,8 +18,8 @@ import System.Directory
 import System.FilePath
 import Unsafe.Coerce
 
-import Application.Hxournal.NetworkClipboard.Client.Config
-import Application.Hxournal.NetworkClipboard.Type
+import Application.HXournal.NetworkClipboard.Client.Config
+import Application.HXournal.NetworkClipboard.Type
 import Data.UUID
 import Data.UUID.V5
 import qualified Data.ByteString as B
@@ -30,13 +30,13 @@ import qualified Data.Attoparsec as A
 
 type Url = String 
 
-nextUUID :: HxournalclipClientConfiguration -> IO UUID
+nextUUID :: HXournalClipClientConfiguration -> IO UUID
 nextUUID mc = do 
   let c = hxournalclipClientURL mc 
   t <- getCurrentTime 
   return . generateNamed namespaceURL . B.unpack . SC.pack $ c ++ "/" ++ show t 
 
-startCreate :: HxournalclipClientConfiguration -> String -> IO () 
+startCreate :: HXournalClipClientConfiguration -> String -> IO () 
 startCreate mc jsonstr = do 
   putStrLn "job started"
   cwd <- getCurrentDirectory
@@ -48,21 +48,26 @@ startCreate mc jsonstr = do
       case parse parseJSON jsonstrokes of 
         Error str2 -> error str2 
         Success strokes -> do  
-          let info = HxournalclipInfo { hxournalclip_uuid = uuid 
+          let info = HXournalClipInfo { hxournalclip_uuid = uuid 
                                       , hxournalclip_strokes = strokes } 
           response <- hxournalclipToServer url ("uploadhxournalclip") methodPost info
           putStrLn $ show response 
 
 
-startGet :: HxournalclipClientConfiguration -> String -> IO () 
+startGet :: HXournalClipClientConfiguration -> String -> IO () 
 startGet mc idee = do 
   putStrLn $"get " ++ idee
   let url = hxournalclipServerURL mc 
   r <- jsonFromServer url ("hxournalclip" </> idee) methodGet
   putStrLn $ show r 
+  case r of 
+    Right v -> case v of 
+      Success v' ->  putStrLn $ show (parse parseJSON v' :: Result HXournalClipInfo)
+      _ -> return ()
+    Left _ -> return ()
 
 
-startPut :: HxournalclipClientConfiguration 
+startPut :: HXournalClipClientConfiguration 
          -> String  -- ^ hxournalclip idee
          -> String  -- ^ hxournalclip name 
          -> IO () 
@@ -78,13 +83,13 @@ startPut mc idee jsonstr = do
         Success strokes -> do  
           let info = case fromString idee of 
                        Nothing -> error "strange in startPut" 
-                       Just idee' -> HxournalclipInfo { hxournalclip_uuid = idee'
+                       Just idee' -> HXournalClipInfo { hxournalclip_uuid = idee'
                                                       , hxournalclip_strokes = strokes }
           response <- hxournalclipToServer url ("hxournalclip" </> idee) methodPut info
           putStrLn $ show response 
 
 
-startDelete :: HxournalclipClientConfiguration -> String -> IO () 
+startDelete :: HXournalClipClientConfiguration -> String -> IO () 
 startDelete mc idee = do 
   putStrLn "job started"
   let url = hxournalclipServerURL mc 
@@ -92,7 +97,7 @@ startDelete mc idee = do
   putStrLn $ show r 
 
 
-startGetList :: HxournalclipClientConfiguration -> IO () 
+startGetList :: HXournalClipClientConfiguration -> IO () 
 startGetList mc = do 
   putStrLn "getlist: "
   let url = hxournalclipServerURL mc 
@@ -112,7 +117,7 @@ jsonFromServer url api mthd = do
       then return . parseJson . SC.concat . C.toChunks . responseBody $ r
       else return (Left $ "status code : " ++ show (statusCode r)) 
 
-hxournalclipToServer :: Url -> String -> Method -> HxournalclipInfo -> IO (Either String (Result Value))
+hxournalclipToServer :: Url -> String -> Method -> HXournalClipInfo -> IO (Either String (Result Value))
 hxournalclipToServer url api mthd mi = do 
   request <- parseUrl (url </> api)
   withManager $ \manager -> do
