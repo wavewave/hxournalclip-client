@@ -24,6 +24,9 @@ import Data.UUID
 import Data.UUID.V5
 import qualified Data.ByteString as B
 import Data.Time.Clock
+import Control.Monad
+import qualified Data.Attoparsec as A
+
 
 type Url = String 
 
@@ -34,14 +37,21 @@ nextUUID mc = do
   return . generateNamed namespaceURL . B.unpack . SC.pack $ c ++ "/" ++ show t 
 
 startCreate :: HxournalclipClientConfiguration -> String -> IO () 
-startCreate mc name = do 
+startCreate mc jsonstr = do 
   putStrLn "job started"
   cwd <- getCurrentDirectory
   let url = hxournalclipServerURL mc 
   uuid <- nextUUID mc
-  let info = HxournalclipInfo { hxournalclip_uuid = uuid , hxournalclip_name = name } 
-  response <- hxournalclipToServer url ("uploadhxournalclip") methodPost info
-  putStrLn $ show response 
+  case A.parseOnly json (SC.pack jsonstr) of 
+    Left str -> error str
+    Right jsonstrokes -> 
+      case parse parseJSON jsonstrokes of 
+        Error str2 -> error str2 
+        Success strokes -> do  
+          let info = HxournalclipInfo { hxournalclip_uuid = uuid 
+                                      , hxournalclip_strokes = strokes } 
+          response <- hxournalclipToServer url ("uploadhxournalclip") methodPost info
+          putStrLn $ show response 
 
 
 startGet :: HxournalclipClientConfiguration -> String -> IO () 
@@ -56,15 +66,22 @@ startPut :: HxournalclipClientConfiguration
          -> String  -- ^ hxournalclip idee
          -> String  -- ^ hxournalclip name 
          -> IO () 
-startPut mc idee name = do 
+startPut mc idee jsonstr = do 
   putStrLn "job started"
   cwd <- getCurrentDirectory
   let url = hxournalclipServerURL mc 
-      info = case fromString idee of 
-               Nothing -> error "strange in startPut" 
-               Just idee' -> HxournalclipInfo { hxournalclip_uuid = idee', hxournalclip_name = name }
-  response <- hxournalclipToServer url ("hxournalclip" </> idee) methodPut info
-  putStrLn $ show response 
+  case A.parseOnly json (SC.pack jsonstr) of 
+    Left str -> error str
+    Right jsonstrokes -> 
+      case parse parseJSON jsonstrokes of 
+        Error str2 -> error str2 
+        Success strokes -> do  
+          let info = case fromString idee of 
+                       Nothing -> error "strange in startPut" 
+                       Just idee' -> HxournalclipInfo { hxournalclip_uuid = idee'
+                                                      , hxournalclip_strokes = strokes }
+          response <- hxournalclipToServer url ("hxournalclip" </> idee) methodPut info
+          putStrLn $ show response 
 
 
 startDelete :: HxournalclipClientConfiguration -> String -> IO () 
